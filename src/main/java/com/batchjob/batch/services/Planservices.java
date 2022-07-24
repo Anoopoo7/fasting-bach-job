@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -45,8 +46,10 @@ public class Planservices {
             List<Fasting_item> fasting_item = plan.getFastingPlan() != null ? plan.getFastingPlan().getFasting_items()
                     : null;
             for (Fasting_item item : fasting_item) {
-                LocalTime itemTime = LocalTime.parse(item.getTime());
-                LocalTime currentTime = LocalTime.parse(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
+                LocalTime itemTime = LocalTime.parse(item.getTime()).minus(330, ChronoUnit.MINUTES);
+                LocalTime currentTime = LocalTime.parse(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")))
+                        .minus(330, ChronoUnit.MINUTES);
+                System.out.println(itemTime + "c" + currentTime);
                 long timeDifference = MINUTES.between(currentTime, itemTime);
                 if (0 < timeDifference && 10 > timeDifference && item.getStatus().equals("PENDING")) {
                     EmailModel emailModel = new EmailModel();
@@ -87,7 +90,7 @@ public class Planservices {
         HttpEntity<EmailRequest> entity = new HttpEntity<>(emailRequest, headers);
 
 
-
+        
         System.out.println("sending mail:............:.......:.......:>>>");
         restTemplate.postForObject(url, entity, Object.class);
         return emailRequest;

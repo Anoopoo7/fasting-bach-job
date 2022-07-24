@@ -48,7 +48,6 @@ public class Planservices {
             for (Fasting_item item : fasting_item) {
                 LocalTime itemTime = LocalTime.parse(item.getTime()).minus(330, ChronoUnit.MINUTES);
                 LocalTime currentTime = LocalTime.parse(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
-                System.out.println(itemTime + "c" + currentTime);
                 long timeDifference = MINUTES.between(currentTime, itemTime);
                 if (0 < timeDifference && 10 > timeDifference && item.getStatus().equals("PENDING")) {
                     EmailModel emailModel = new EmailModel();

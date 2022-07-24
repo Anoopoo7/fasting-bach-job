@@ -47,8 +47,7 @@ public class Planservices {
                     : null;
             for (Fasting_item item : fasting_item) {
                 LocalTime itemTime = LocalTime.parse(item.getTime()).minus(330, ChronoUnit.MINUTES);
-                LocalTime currentTime = LocalTime.parse(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")))
-                        .minus(330, ChronoUnit.MINUTES);
+                LocalTime currentTime = LocalTime.parse(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm")));
                 System.out.println(itemTime + "c" + currentTime);
                 long timeDifference = MINUTES.between(currentTime, itemTime);
                 if (0 < timeDifference && 10 > timeDifference && item.getStatus().equals("PENDING")) {
@@ -90,7 +89,7 @@ public class Planservices {
         HttpEntity<EmailRequest> entity = new HttpEntity<>(emailRequest, headers);
 
 
-        
+
         System.out.println("sending mail:............:.......:.......:>>>");
         restTemplate.postForObject(url, entity, Object.class);
         return emailRequest;

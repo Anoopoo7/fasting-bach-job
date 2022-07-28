@@ -12,5 +12,7 @@ import com.batchjob.batch.models.FastingPlanProgress;
 public interface PlanRepository  extends MongoRepository<FastingPlanProgress, String>{
 
     List<FastingPlanProgress> findAllByStatus(boolean b);
+
+    List<FastingPlanProgress> findAllByStatusAndEnabledAndActiveDaysIn(boolean b, boolean c, List<String> today_List);
     
 }

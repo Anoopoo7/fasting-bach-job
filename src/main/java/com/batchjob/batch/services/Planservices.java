@@ -37,7 +37,11 @@ public class Planservices {
     private UserRepository userRepository;
 
     public EmailRequest checkValidPlans() {
-        List<FastingPlanProgress> fastingPlanProgress = planRepository.findAllByStatus(false);
+        Date today = new Date();
+        List<String> today_List = new ArrayList<>();
+        today_List.add(today.getYear() + "-" + today.getMonth() + "-" + today.getDate());
+        List<FastingPlanProgress> fastingPlanProgress = planRepository.findAllByStatusAndEnabledAndActiveDaysIn(false,
+                true, today_List);
         if (null == fastingPlanProgress) {
             return null;
         }
@@ -81,17 +85,18 @@ public class Planservices {
         KeysWords.put("#003", emailModel.getFasting_item().getData());
         emailRequest.setKeysWords(KeysWords);
 
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         HttpEntity<EmailRequest> entity = new HttpEntity<>(emailRequest, headers);
 
-
-
         System.out.println("sending mail:............:.......:.......:>>>");
         restTemplate.postForObject(url, entity, Object.class);
         return emailRequest;
+    }
+
+    public void populatePlanResults() {
+        System.out.println("...................");
     }
 
 }

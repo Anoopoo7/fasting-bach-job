@@ -24,4 +24,11 @@ public class PlanChecker {
         planservices.checkValidPlans();
         System.out.println("......................mail checking @" + new Date() + "....................!");
     }
+
+    @Scheduled(cron = "0 0 0 ? * * ")
+    // @GetMapping("/start")
+    public void populatePlanResults() {
+        planservices.populatePlanResults();
+        System.out.println("......................populating plan results @" + new Date() + "....................!");
+    }
 }

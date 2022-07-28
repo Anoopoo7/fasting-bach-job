@@ -1,7 +1,5 @@
 package com.batchjob.batch.services;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -23,7 +21,9 @@ import com.batchjob.batch.models.EmailModel;
 import com.batchjob.batch.models.EmailRequest;
 import com.batchjob.batch.models.FastingPlanProgress;
 import com.batchjob.batch.models.Fasting_item;
+import com.batchjob.batch.models.PlanHistory;
 import com.batchjob.batch.models.users;
+import com.batchjob.batch.repository.PlanHistoryRepository;
 import com.batchjob.batch.repository.PlanRepository;
 import com.batchjob.batch.repository.UserRepository;
 
@@ -35,6 +35,8 @@ public class Planservices {
     private PlanRepository planRepository;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private PlanHistoryRepository planHistoryRepository;
 
     public EmailRequest checkValidPlans() {
         Date today = new Date();
@@ -96,7 +98,53 @@ public class Planservices {
     }
 
     public void populatePlanResults() {
-        System.out.println("...................");
+        Date today = new Date();
+        List<String> today_List = new ArrayList<>();
+        String todayString = today.getYear() + "-" + today.getMonth() + "-" + today.getDate();
+        today_List.add(todayString);
+        List<FastingPlanProgress> fastingPlanProgress = planRepository.findAllByStatusAndEnabledAndActiveDaysIn(false,
+                true, today_List);
+        if (null == fastingPlanProgress) {
+            return;
+        }
+        for (FastingPlanProgress fastingPlan : fastingPlanProgress) {
+
+            PlanHistory planHistory = planHistoryRepository.findByUserIdAndFastIdAndComplete(fastingPlan.getUserId(),
+                    fastingPlan.getFastingPlan().getId(), false);
+            if (null == planHistory) {
+                planHistory = new PlanHistory();
+                planHistory.setUserId(fastingPlan.getUserId());
+                planHistory.setFastId(fastingPlan.getFastingPlan().getId());
+                planHistory.setFastName(fastingPlan.getFastingPlan().getName());
+                planHistory.setUpdatedDate(new Date());
+                Map<String, List<Fasting_item>> activity = new HashMap<String, List<Fasting_item>>();
+                activity.put(todayString, fastingPlan.getFastingPlan().getFasting_items());
+                planHistory.setActivity(activity);
+                String lastDay = fastingPlan.getActiveDays().get(fastingPlan.getActiveDays().size() - 1);
+                if (todayString.equals(lastDay)) {
+                    planHistory.setComplete(true);
+                }
+                planHistoryRepository.save(planHistory);
+            }
+            planHistory.setUpdatedDate(new Date());
+            Map<String, List<Fasting_item>> activity = planHistory.getActivity();
+            activity.put(todayString, fastingPlan.getFastingPlan().getFasting_items());
+            String lastDay = fastingPlan.getActiveDays().get(fastingPlan.getActiveDays().size() - 1);
+            if (todayString.equals(lastDay)) {
+                planHistory.setComplete(true);
+            }
+            planHistoryRepository.save(planHistory);
+            
+            List<Fasting_item> items = new ArrayList<Fasting_item>();
+            for (Fasting_item item : fastingPlan.getFastingPlan().getFasting_items()) {
+                item.setStatus("PENDING");
+                item.setLastUpdate(new Date());
+                items.add(item);
+            }
+            fastingPlan.getFastingPlan().setFasting_items(items);
+            planRepository.save(fastingPlan);
+
+        }
     }
 
 }

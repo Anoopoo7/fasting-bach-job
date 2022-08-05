@@ -29,6 +29,9 @@ import com.batchjob.batch.repository.UserRepository;
 
 import static java.time.temporal.ChronoUnit.MINUTES;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+
 @Service
 public class Planservices {
     @Autowired
@@ -108,42 +111,60 @@ public class Planservices {
             return;
         }
         for (FastingPlanProgress fastingPlan : fastingPlanProgress) {
-
-            PlanHistory planHistory = planHistoryRepository.findByUserIdAndFastIdAndComplete(fastingPlan.getUserId(),
-                    fastingPlan.getFastingPlan().getId(), false);
-            if (null == planHistory) {
-                planHistory = new PlanHistory();
-                planHistory.setUserId(fastingPlan.getUserId());
-                planHistory.setFastId(fastingPlan.getFastingPlan().getId());
-                planHistory.setFastName(fastingPlan.getFastingPlan().getName());
+            try {
+                PlanHistory planHistory = planHistoryRepository.findByUserIdAndFastIdAndComplete(
+                        fastingPlan.getUserId(),
+                        fastingPlan.getFastingPlan().getId(), false);
+                if (null == planHistory) {
+                    planHistory = new PlanHistory();
+                    planHistory.setUserId(fastingPlan.getUserId());
+                    planHistory.setFastId(fastingPlan.getFastingPlan().getId());
+                    planHistory.setFastName(fastingPlan.getFastingPlan().getName());
+                    planHistory.setUpdatedDate(new Date());
+                    Map<String, List<Fasting_item>> activity = new HashMap<String, List<Fasting_item>>();
+                    activity.put(todayString, fastingPlan.getFastingPlan().getFasting_items());
+                    planHistory.setActivity(activity);
+                    String lastDay = fastingPlan.getActiveDays().get(fastingPlan.getActiveDays().size() - 1);
+                    if (todayString.equals(lastDay)) {
+                        planHistory.setComplete(true);
+                    }
+                }
                 planHistory.setUpdatedDate(new Date());
-                Map<String, List<Fasting_item>> activity = new HashMap<String, List<Fasting_item>>();
+                Map<String, List<Fasting_item>> activity = planHistory.getActivity();
                 activity.put(todayString, fastingPlan.getFastingPlan().getFasting_items());
-                planHistory.setActivity(activity);
                 String lastDay = fastingPlan.getActiveDays().get(fastingPlan.getActiveDays().size() - 1);
                 if (todayString.equals(lastDay)) {
                     planHistory.setComplete(true);
                 }
                 planHistoryRepository.save(planHistory);
-            }
-            planHistory.setUpdatedDate(new Date());
-            Map<String, List<Fasting_item>> activity = planHistory.getActivity();
-            activity.put(todayString, fastingPlan.getFastingPlan().getFasting_items());
-            String lastDay = fastingPlan.getActiveDays().get(fastingPlan.getActiveDays().size() - 1);
-            if (todayString.equals(lastDay)) {
-                planHistory.setComplete(true);
-            }
-            planHistoryRepository.save(planHistory);
-            
-            List<Fasting_item> items = new ArrayList<Fasting_item>();
-            for (Fasting_item item : fastingPlan.getFastingPlan().getFasting_items()) {
-                item.setStatus("PENDING");
-                item.setLastUpdate(new Date());
-                items.add(item);
-            }
-            fastingPlan.getFastingPlan().setFasting_items(items);
-            planRepository.save(fastingPlan);
 
+                List<Fasting_item> items = new ArrayList<Fasting_item>();
+                for (Fasting_item item : fastingPlan.getFastingPlan().getFasting_items()) {
+                    item.setStatus("PENDING");
+                    item.setLastUpdate(new Date());
+                    items.add(item);
+                }
+                fastingPlan.getFastingPlan().setFasting_items(items);
+
+                SimpleDateFormat sdformat = new SimpleDateFormat("yyyy-MM-dd");
+                String _todayString = today.getYear() + "-" + today.getMonth() + "-" + today.getDate();
+                String _lastDayString = fastingPlan.getActiveDays().get(fastingPlan.getActiveDays().size() - 1);
+                Date _today = null;
+                Date _lastday = null;
+                try {
+                    _today = sdformat.parse(_todayString);
+                    _lastday = sdformat.parse(_lastDayString);
+                    if (_today.compareTo(_lastday) > 0) {
+                        fastingPlan.setEnabled(false);
+                        fastingPlan.setStatus(true);
+                    }
+                } catch (ParseException e) {
+                    System.err.println(e);
+                }
+                planRepository.save(fastingPlan);
+            } catch (Exception e) {
+                System.out.println("skipping plan for the user ====>:" + fastingPlan.getUserId());
+            }
         }
     }
 

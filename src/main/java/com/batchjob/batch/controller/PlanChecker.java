@@ -25,7 +25,7 @@ public class PlanChecker {
         System.out.println("......................mail checking @" + new Date() + "....................!");
     }
 
-    @Scheduled(cron = "0 0 0 ? * * ")
+    @Scheduled(cron = "0 30 18 ? * *")
     // @GetMapping("/start")
     public void populatePlanResults() {
         planservices.populatePlanResults();
